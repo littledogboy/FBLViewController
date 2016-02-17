@@ -17,6 +17,11 @@
 // 菜单标题
 @property (nonatomic, copy) NSArray *menuTitleArray;
 
+// 标题选中颜色
+@property (nonatomic, strong) UIColor *titleSelectedColor;
+// 标题未选中颜色
+@property (nonatomic, strong) UIColor *titleUnSelectedColor;
+
 // 子视图控制器
 @property (nonatomic, copy) NSArray *viewControllers;
 

@@ -11,7 +11,7 @@
 #define kTotalWidth [UIScreen mainScreen].bounds.size.width
 #define kTotalHeight [UIScreen mainScreen].bounds.size.height
 #define kMenuHeight 44
-#define kButtonWidth (375 / 4.0) // 注意宏定义的替换。
+#define kButtonWidth (kTotalWidth / _menuTitleArray.count) // 加上括号注意宏定义的替换。
 
 
 #import "AGScrollFrameController.h"
@@ -101,6 +101,8 @@
     // Do any additional setup after loading the view.
 }
 
+#pragma mark-
+#pragma mark setMunuView
 /**
  *  设置菜单视图
  *  添加 button，添加滑动条
@@ -111,20 +113,19 @@
     // 设置滚动条， 设置默认选中的按钮
     _selectedIndex = 0; // 默认选中按钮下标
     _latestSelectedIndex = 0; // 初始状态下，默认选中与上一次选中一样。
-    
     self.menuTitleArray = @[@"直播", @"推荐", @"番剧", @"分区"];
-    CGFloat totalWidth = [UIScreen mainScreen].bounds.size.width;
-    self.menuView.contentSize = CGSizeMake(totalWidth, 44); // 设置可滑动大小
     
-    CGFloat buttonWidth = kTotalWidth / _menuTitleArray.count;
-    CGFloat buttonHeight = 44;
+    self.menuWidth = kTotalWidth; // 375
+    self.menuHeight = kMenuHeight; // 44
+    CGFloat buttonWidth = kTotalWidth / _menuTitleArray.count; // 375 / 4
+    CGFloat buttonHeight = kMenuHeight;
+    self.menuView.contentSize = CGSizeMake(_menuWidth, 44); // 设置可滑动大小
     
     // 设置滚动条
     self.underLine = [[UIImageView alloc] initWithFrame:(CGRectMake(_selectedIndex * buttonWidth, 0, buttonWidth, buttonHeight))];
     [_underLine setImage:[UIImage imageNamed:@"bg_underline_selected_44pt"]];
     _underLine.userInteractionEnabled = YES; // 打开用户交互
     [self.menuView addSubview:self.underLine];
-    
     
     // 添加button
     for (int i = 0; i < _menuTitleArray.count; i++) {
@@ -137,7 +138,7 @@
         if (i == _selectedIndex) {
             [button setTitleColor:RGB(241, 117, 154) forState:(UIControlStateNormal)];
         }else {
-            [button setTitleColor:[UIColor grayColor] forState:(UIControlStateNormal)];
+            [button setTitleColor:RGB(154, 154, 154) forState:(UIControlStateNormal)];
         }
         // 241 117 154
         [button setTitleColor:RGB(241, 117, 154) forState:(UIControlStateHighlighted)];
@@ -147,8 +148,9 @@
     }
 }
 
+
 /**
- *  菜单按钮时间
+ *  按钮事件
  *
  *  @param button 点击的菜单中的按钮
  */
@@ -169,7 +171,7 @@
     // 把其他颜色改为灰色
     for (UIView *btn in self.menuView.subviews) {
         if ( ![btn isEqual:button] && [btn isKindOfClass:[UIButton class]]) {
-            [(UIButton *)btn setTitleColor:[UIColor grayColor] forState:(UIControlStateNormal)];
+            [(UIButton *)btn setTitleColor:RGB(154, 154, 154) forState:(UIControlStateNormal)];
         }
         
     }
@@ -238,8 +240,8 @@
     self.latestSelectedIndex = self.selectedIndex;
 }
 
+
 // 滚动
-// 准备做滚动的时候title颜色渐变效果
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
     // menuOffSetX : menuContentSize.width = contentViewOffSetX : contentViewContentSize.width
@@ -257,11 +259,10 @@
         self.underLine.frame = frame;
     }
     
-    
     // 文字颜色渐变 RGB(241, 117, 154) --> RGB(154，154，154)
     // 分析：当移动的时候，总有一个按钮颜色由粉红--》灰色，一个按钮由灰色--》粉红
     // 需要更改两个button的颜色，更改时根据 button的相对偏移量比例来更改。
-    // 重点：求出相对变异量比例
+    // 重点：求出相对偏移量比例
     // 注意：因为不允许回弹，因此通过滚动可以获得的tag值为1 到count-1，最后一个button避免了越界问题。
     // 1. 求出contentView的tag，然后由此tag求得button的tag。
     NSInteger tag = contentViewOffX / kTotalWidth + 1; // 取整
@@ -279,12 +280,9 @@
     // 根据比例在颜色中求值 241...154 117...154 154...154
     // r随着percent增大而减小 241 -->154
     CGFloat r = [self percentValue:1 - percent min:154 max:241];
-    
-    
     // g随着percent增大而增大 117 -->154
     CGFloat g = [self percentValue:percent min:117 max:154];
     // b不变 154
-    [button1 setTitleColor:RGB(r, g, 154) forState:(UIControlStateNormal)];
     // 6. 更改button2的颜色
     UIButton *button2 = (UIButton *)[self.menuView viewWithTag:tag + 1];
     // 随着percent增大而增大  154-->241
@@ -292,9 +290,13 @@
     // 随着percent增大而减小  154-->117
     CGFloat g2 = [self percentValue:1 - percent  min:117 max:154];
     // b不变 154
-    [button2 setTitleColor:RGB(r2, g2, 154) forState:(UIControlStateNormal)];
+//    if (self.isSelected == NO) {
+        [button1 setTitleColor:RGB(r, g, 154) forState:(UIControlStateNormal)];
+        [button2 setTitleColor:RGB(r2, g2, 154) forState:(UIControlStateNormal)];
+//    }
 //    NSLog(@"%@", button2.titleLabel.text);
 }
+
 
 // 手动滚动已经停止滚动
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
@@ -310,16 +312,15 @@
         if ([btn isKindOfClass:[UIButton class]] && btn.tag == self.selectedIndex + 1) {
             [(UIButton *)btn setTitleColor:RGB(241, 117, 154) forState:(UIControlStateNormal)];
         } else if ([btn isKindOfClass:[UIButton class]]) {
-            [(UIButton *)btn setTitleColor:[UIColor grayColor] forState:(UIControlStateNormal)];
+            [(UIButton *)btn setTitleColor:RGB(154, 154, 154) forState:(UIControlStateNormal)];
         }
     }
     
 }
 
-// 停止滚动动画
 
-
-//
+#pragma mark-
+#pragma mark 根据percent求min...max 之间的值
 - (CGFloat)percentValue:(CGFloat)percent min:(CGFloat)min max:(CGFloat)max
 {
     // value的值 随着percent增大而增大
@@ -331,14 +332,10 @@
     return value;
 }
 
-
-
-
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
-
 
 
 /*

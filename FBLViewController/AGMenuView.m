@@ -10,6 +10,12 @@
 
 @implementation AGMenuView
 
+// 重写滚动时触摸点分发方法
+- (BOOL)touchesShouldCancelInContentView:(UIView *)view
+{
+    return NO;
+}
+
 /*
 // Only override drawRect: if you perform custom drawing.
 // An empty implementation adversely affects performance during animation.
