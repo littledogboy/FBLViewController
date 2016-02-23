@@ -20,7 +20,21 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     AGScrollFrameController *agSFC = [[AGScrollFrameController alloc] init];
+    agSFC.menuTitleArray = @[@"直播", @"推荐", @"番剧", @"分区"];
     AGNavigationController *agNC = [[AGNavigationController alloc] initWithRootViewController:agSFC];
+    
+    // 添加子控制器
+    UIViewController *VC1 = [[UIViewController alloc] init];
+    VC1.view.backgroundColor = [UIColor redColor];
+    UIViewController *VC2 = [[UIViewController alloc] init];
+    VC2.view.backgroundColor = [UIColor yellowColor];
+    UIViewController *VC3 = [[UIViewController alloc] init];
+    VC3.view.backgroundColor = [UIColor blueColor];
+    UIViewController *VC4 = [[UIViewController alloc] init];
+    VC4.view.backgroundColor = [UIColor greenColor];
+    
+    agSFC.viewControllers = @[VC1, VC2, VC3, VC4];
+    
     
     self.window.rootViewController = agNC;
     

@@ -14,8 +14,9 @@
 @property (nonatomic, assign) CGFloat menuWidth;
 @property (nonatomic, assign) CGFloat menuHeight;
 
-// 菜单标题
-@property (nonatomic, copy) NSArray *menuTitleArray;
+@property (nonatomic, copy) NSArray *menuTitleArray; // 菜单标题
+
+@property (nonatomic, assign) NSInteger selectedIndex; // button选中下标
 
 // 标题选中颜色
 @property (nonatomic, strong) UIColor *titleSelectedColor;

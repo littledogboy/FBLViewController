@@ -11,20 +11,21 @@
 #define kTotalWidth [UIScreen mainScreen].bounds.size.width
 #define kTotalHeight [UIScreen mainScreen].bounds.size.height
 #define kMenuHeight 44
-#define kButtonWidth (kTotalWidth / _menuTitleArray.count) // 加上括号注意宏定义的替换。
+#define kButtonWidth (kTotalWidth / _menuTitleArray.count) // 加上括号注意宏定义的替换,(后面更改，button的宽度与字数有关)
 
 
 #import "AGScrollFrameController.h"
+#import "AGMenuView.h" // 导入滚动时忽视点击视图
 
 @interface AGScrollFrameController () <UIScrollViewDelegate>
 
-@property (nonatomic, strong) UIScrollView *menuView; // 菜单滚动视图
+@property (nonatomic, strong) AGMenuView *menuView; // 菜单滚动视图
 
 @property (nonatomic, strong) UIScrollView *contentView; // 内容滚动视图
 
 @property (nonatomic, strong) UIImageView *underLine; // 滚动条
 
-@property (nonatomic, assign) NSInteger selectedIndex; // button选中下标
+
 @property (nonatomic, assign) NSInteger latestSelectedIndex; // 上一次选中下标
 
 @property (nonatomic, assign) BOOL isSelected; // button是否选中，默认为no。
@@ -43,31 +44,7 @@
     // 坑收集。 大家都知道navigationBar如果下面是个scrollView或者其子类，那么scrollView里面子视图会自动向下偏移64个点，导航栏44 + 状态栏20
     // 那么如果我们把navigationBar给隐藏掉。stateBar下面添加的是scrollView或者子类，那么scrollView里面的控件也会向下移动20个点，如图所示。（与添加顺序有关）打印一下发现frame没有变化，但是确实是发生了变化。
     // 如果我们想让它不下移怎么办呢？
-    // automaticallyAdjustsScrollViewInsets 设置为no
-    
-    
-//    // stateBar 解决方法1放上面
-//    UIView *stateBar = [[UIView alloc] initWithFrame:(CGRectMake(0, 0, 375, 20))];
-//    stateBar.backgroundColor = [UIColor whiteColor];
-//    [self.view addSubview:stateBar];
-    
-//    self.menuView = [[UIScrollView alloc] initWithFrame:(CGRectMake(0, 20, 375, 44))];
-//    _menuView.contentSize = CGSizeMake(375, 44);
-//    _menuView.backgroundColor = [UIColor yellowColor];
-//    _view2 = [[UIView alloc] initWithFrame:(CGRectMake(0, 0, 90, 44))];
-//    _view2.backgroundColor = [UIColor redColor];
-//    [_menuView addSubview:_view2];
-//    [self.view addSubview:_menuView];
-    
-    /*
-    UIButton *button = [UIButton buttonWithType:(UIButtonTypeSystem)];
-    button.frame = CGRectMake(100, 100, 100, 40);
-    [button setTitle:@"测试" forState:(UIControlStateNormal)];
-    [button addTarget:self action:@selector(buttonAction) forControlEvents:(UIControlEventTouchUpInside)];
-    [self.view addSubview:button];
-     */
-    
-    
+    // 两种解决方法： 1. 不让scroll 直接放在bar的下面 2. 关闭automaticallyAdjustsScrollViewInsets                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
     // stateBar
     UIView *stateBar = [[UIView alloc] initWithFrame:(CGRectMake(0, 0, 375, 20))];
     stateBar.backgroundColor = [UIColor whiteColor];
@@ -76,7 +53,7 @@
     // menuView
     CGFloat width = 375;
     CGFloat height = 44;
-    self.menuView = [[UIScrollView alloc] initWithFrame:(CGRectMake(0, 20, width, height))];
+    self.menuView = [[AGMenuView alloc] initWithFrame:(CGRectMake(0, 20, width, height))];
     _menuView.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:_menuView];
 
@@ -109,11 +86,11 @@
  */
 - (void)setMunuView
 {
-    
     // 设置滚动条， 设置默认选中的按钮
-    _selectedIndex = 0; // 默认选中按钮下标
-    _latestSelectedIndex = 0; // 初始状态下，默认选中与上一次选中一样。
-    self.menuTitleArray = @[@"直播", @"推荐", @"番剧", @"分区"];
+    _selectedIndex = self.selectedIndex; // 默认选中按钮下标
+    _latestSelectedIndex = self.selectedIndex; // 初始状态下，默认选中与上一次选中一样。
+    
+    self.menuTitleArray = self.menuTitleArray; // menu标题
     
     self.menuWidth = kTotalWidth; // 375
     self.menuHeight = kMenuHeight; // 44
@@ -208,18 +185,7 @@
     _contentView.delegate = self; // 代理
     _contentView.contentSize = CGSizeMake(kTotalWidth * _menuTitleArray.count, kTotalHeight - contentViewY); // contentSize
     _contentView.showsHorizontalScrollIndicator = NO; // 隐藏水平滚动条
-    // 添加子视图
-    //demo
-    UIViewController *VC1 = [[UIViewController alloc] init];
-    VC1.view.backgroundColor = [UIColor redColor];
-    UIViewController *VC2 = [[UIViewController alloc] init];
-    VC2.view.backgroundColor = [UIColor yellowColor];
-    UIViewController *VC3 = [[UIViewController alloc] init];
-    VC3.view.backgroundColor = [UIColor blueColor];
-    UIViewController *VC4 = [[UIViewController alloc] init];
-    VC4.view.backgroundColor = [UIColor greenColor];
-    self.viewControllers = @[VC1, VC2, VC3, VC4];
-    
+    // 添加子视图    
     for (int i = 0; i < self.viewControllers.count; i++) {
         UIView *view = ((UIViewController *)self.viewControllers[i]).view;
         view.tag = i + 1; // 设置tag值
@@ -270,12 +236,8 @@
     UIButton *button1 = (UIButton *)[self.menuView viewWithTag:tag];
     // 3. 获取menu中相对button1的位移
     CGFloat buttonOffSetX = menuViewOffX - kButtonWidth * (tag - 1);
-//    NSLog(@"%f", buttonOffSetX);
     // 4. 求得相对比例
     CGFloat percent = buttonOffSetX / kButtonWidth; // 果然是kButtonWidth的原因。
-//    NSLog(@"%f", kButtonWidth);
-    NSLog(@"%f", percent);
-    
     // 5. 根据相对比例更改button1的字体颜色,比例一开始为0，随着移到下一个button或者上一个button变为1
     // 根据比例在颜色中求值 241...154 117...154 154...154
     // r随着percent增大而减小 241 -->154
@@ -290,11 +252,12 @@
     // 随着percent增大而减小  154-->117
     CGFloat g2 = [self percentValue:1 - percent  min:117 max:154];
     // b不变 154
-//    if (self.isSelected == NO) {
+    
+    // 滚动时更改button颜色
+//    if (self.isSelected == NO) { 
         [button1 setTitleColor:RGB(r, g, 154) forState:(UIControlStateNormal)];
         [button2 setTitleColor:RGB(r2, g2, 154) forState:(UIControlStateNormal)];
 //    }
-//    NSLog(@"%@", button2.titleLabel.text);
 }
 
 
@@ -331,6 +294,7 @@
     value = min +  changeValue; // 当percent为0时value最小为min，当percent为1时value最大为max
     return value;
 }
+
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
